@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance at Work Tour</title>
+<meta name="description" content="A guided click-through of Attendance at Work, sickness absence management built on Appian.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500;700&family=Funnel+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --paper: #F3F4FA;
+  --surface: #FFFFFF;
+  --ink: #0E1330;
+  --muted: #565C7E;
+  --line: #DADDEE;
+  --accent: #2322F0;
+  --accent-ink: #FFFFFF;
+  --navy: #020950;
+  --stage: #E6E8F4;
+  --dim: rgba(6, 9, 38, .48);
+  --tip-shadow: 0 18px 40px -12px rgba(6, 9, 48, .35);
+  --display: "Funnel Display", "Funnel Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sans: "Funnel Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #070A22; --surface: #121741; --ink: #E9EBFA; --muted: #A3A8CC; --line: #262C5C;
+    --accent: #6E6CFF; --accent-ink: #FFFFFF; --stage: #0C1032; --dim: rgba(0, 0, 0, .55);
+    --tip-shadow: 0 18px 40px -12px rgba(0, 0, 0, .7); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #070A22; --surface: #121741; --ink: #E9EBFA; --muted: #A3A8CC; --line: #262C5C;
+  --accent: #6E6CFF; --accent-ink: #FFFFFF; --stage: #0C1032; --dim: rgba(0, 0, 0, .55);
+  --tip-shadow: 0 18px 40px -12px rgba(0, 0, 0, .7); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 28px; display: grid; gap: 14px; }
+
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+h1 { font: 700 clamp(20px, 2.4vw, 28px)/1.15 var(--display); margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+.sub { color: var(--muted); font-size: 14px; }
+
+.chapters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; padding-bottom: 2px; }
+.chapters button { flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: 500 13px var(--sans);
+  padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.chapters button[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chapters button:focus-visible, .ctl:focus-visible, .hotspot:focus-visible, .tip button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.stage { position: relative; width: 100%; aspect-ratio: 1440 / 900; max-width: 100%; background: var(--stage); border-radius: 10px; overflow: hidden;
+  box-shadow: 0 0 0 1px var(--line), 0 24px 60px -30px rgba(2, 9, 80, .45); }
+.stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.spot { position: absolute; border-radius: 8px; pointer-events: none; transition: all .35s ease; }
+.spot.info { box-shadow: 0 0 0 3px var(--accent), 0 0 0 9999px var(--dim); }
+.spot.click { box-shadow: 0 0 0 2px var(--accent); }
+.hotspot { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  background: var(--accent); box-shadow: 0 0 0 4px #fff, 0 4px 14px rgba(2, 9, 80, .5); }
+.hotspot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 3px solid var(--accent); animation: ping 1.6s ease-out infinite; }
+@keyframes ping { from { transform: scale(1); opacity: .9; } to { transform: scale(2.3); opacity: 0; } }
+
+.tip { position: absolute; width: min(320px, 70%); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 14px 16px 12px;
+  box-shadow: var(--tip-shadow), 0 0 0 1px var(--line); display: grid; gap: 6px; z-index: 3; }
+.tip .chap { font: 600 11px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.tip h2 { font: 700 18px/1.2 var(--display); margin: 0; text-wrap: balance; }
+.tip p { margin: 0; font-size: 14px; color: var(--ink); }
+.tip .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 4px; }
+.tip .count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tip .hint { font-size: 12px; color: var(--muted); }
+.btn { border: 0; border-radius: 8px; padding: 8px 14px; font: 600 13px var(--sans); cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+
+.bar { display: flex; align-items: center; gap: 12px; }
+.ctl { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 14px; font: 600 13px var(--sans); cursor: pointer; }
+.ctl:disabled { opacity: .45; cursor: default; }
+.progress { flex: 1; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
+.pos { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: right; }
+.note { font-size: 12px; color: var(--muted); }
+
+.cover { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px;
+  background: linear-gradient(120deg, rgba(2, 9, 80, .93), rgba(35, 34, 240, .82)); color: #fff; text-align: left; }
+.cover .inner { max-width: 560px; display: grid; gap: 12px; }
+.cover h2 { font: 700 clamp(24px, 4vw, 40px)/1.08 var(--display); margin: 0; text-wrap: balance; }
+.cover p { margin: 0; font-size: clamp(14px, 1.6vw, 16px); color: #DCDDFF; }
+.cover .btn { background: #fff; color: var(--navy); font-size: 15px; padding: 11px 20px; justify-self: start; }
+.cover .meta { font-size: 13px; color: #B9BBF5; }
+
+/* narrow screens: tooltip leaves the stage */
+@media (max-width: 760px) {
+  .tip { position: static; width: auto; box-shadow: 0 0 0 1px var(--line); }
+  .tipdock { display: block; }
+  .hotspot { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
+}
+.tipdock { display: none; }
+@media (max-width: 760px) {
+  .stage.covered { aspect-ratio: auto; }
+  .stage.covered .cover { position: relative; inset: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .hotspot::after { animation: none; } .spot, .progress i { transition: none; } }
+.embed .wrap { padding: 8px; gap: 10px; }
+.embed header, .embed .note { display: none; }
+/* embedded: the screen scales to the iframe height so the controls always fit */
+.embed html, .embed body { overflow: hidden; }
+.embed .stage { width: min(100%, calc((100vh - 112px) * 1.6)); justify-self: center; }
+.embed .chapters, .embed .bar { width: min(100%, calc((100vh - 112px) * 1.6)); justify-self: center; }
+@media (max-width: 760px) { .embed html, .embed body { overflow: auto; } .embed .stage, .embed .chapters, .embed .bar { width: 100%; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Attendance at Work on Appian</h1>
+    <span class="sub">A guided tour of sickness absence management: manager, Occupational Health, HR, leaders and staff.</span>
+  </header>
+  <nav class="chapters" id="chapters" aria-label="Chapters"></nav>
+
+  <div class="stage" id="stage">
+    <img id="shot" alt="">
+    <div class="spot" id="spot" hidden></div>
+    <button class="hotspot" id="hotspot" hidden aria-label="Do this step"></button>
+    <div class="tip" id="tip" role="dialog" aria-live="polite"></div>
+    <div class="cover" id="cover">
+      <div class="inner">
+        <h2>Every absence managed, every step on record</h2>
+        <p>Follow Daniel, 88 days off sick with no Occupational Health referral, through his manager, OH, HR and the Trust's leaders, and see his own view on his phone. Every screen is the real Appian application, following the Trust's attendance policy.</p>
+        <span class="meta" id="covermeta"></span>
+        <button class="btn" id="start">Start the tour</button>
+      </div>
+    </div>
+  </div>
+  <div class="tipdock" id="tipdock"></div>
+
+  <div class="bar">
+    <button class="ctl" id="prev" aria-label="Previous step">Back</button>
+    <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+    <span class="pos" id="pos"></span>
+    <button class="ctl" id="next" aria-label="Next step">Next</button>
+  </div>
+  <p class="note">Click the pulsing dot or press → to move on. All people and data are fictional; Pennine Vale is a fictional trust. Emails are simulated. Every AI output is labelled, and a person approves anything that leaves the system.</p>
+</div>
+
+<script>
+if (new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');
+const STEPS = [{"id": "01", "ch": "Sarah's morning", "kind": "info", "title": "What Sarah sees first", "text": "Sarah runs Ward 7. Before she has done anything, AAW tells her who is off, what's overdue and where to start. It's built from her team's case records, checked against the HR06 policy.", "box": {"x": 306, "y": 394, "width": 1060, "height": 29}}, {"id": "02", "ch": "Sarah's morning", "kind": "click", "title": "Ask Appian AI for the brief", "text": "One click asks Appian AI to turn the same facts into advice.", "box": {"x": 1202, "y": 352, "width": 182, "height": 34}}, {"id": "03", "ch": "Sarah's morning", "kind": "info", "title": "The AI writes, the records decide", "text": "The actions, dates and links still come from the case records. The AI only writes the words, and it says so.", "box": {"x": 544, "y": 362, "width": 714, "height": 14}}, {"id": "04", "ch": "Sarah's morning", "kind": "click", "title": "8am: Liam texts in sick", "text": "Liam has hurt his back. Sarah records it in one panel.", "box": {"x": 282, "y": 284, "width": 173, "height": 38}}, {"id": "05", "ch": "Sarah's morning", "kind": "click", "title": "Who, why and how they got in touch", "text": "Pick the person, the reason and what they said. Choosing 'Text message' reminds Sarah that HR06 asks staff to phone.", "box": {"x": 306, "y": 414, "width": 346, "height": 42}}, {"id": "06", "ch": "Sarah's morning", "kind": "click", "title": "Save", "text": "Save the absence. It opens a case for Liam.", "box": {"x": 1262, "y": 665, "width": 122, "height": 38}}, {"id": "07", "ch": "Sarah's morning", "kind": "info", "title": "Day one, done for her", "text": "His day-one actions appear straight away: keep in touch and, because it is musculoskeletal, an Occupational Health referral on day one. Each action shows its HR06 rule.", "box": {"x": 323, "y": 350, "width": 376, "height": 17}}, {"id": "08", "ch": "Daniel's referral", "kind": "click", "title": "Daniel: 88 days, no referral", "text": "Daniel Hughes has been off for 88 days, and his day-one OH referral never went. Draft it now.", "box": {"x": 856, "y": 433, "width": 126, "height": 34}}, {"id": "09", "ch": "Daniel's referral", "kind": "info", "title": "Drafted from the record", "text": "The reason for referral and five questions for OH are written from his case. Sarah can change anything before it goes.", "box": {"x": 803, "y": 433, "width": 179, "height": 34}}, {"id": "10", "ch": "Daniel's referral", "kind": "click", "title": "Approve and send", "text": "Nothing leaves without Sarah approving it.", "box": {"x": 803, "y": 433, "width": 179, "height": 34}}, {"id": "11", "ch": "Daniel's referral", "kind": "info", "title": "In the OH inbox in seconds", "text": "Three months late became minutes, with the right questions, signed off by his manager.", "box": {"x": 323, "y": 0, "width": 506, "height": 17}}, {"id": "12", "ch": "Occupational Health", "kind": "info", "title": "Marcus's inbox", "text": "Marcus in Occupational Health sees Daniel's referral the moment Sarah sends it, with her questions.", "box": {"x": 306, "y": 332, "width": 96, "height": 17}}, {"id": "13", "ch": "Occupational Health", "kind": "click", "title": "Book him in", "text": "Book an appointment for tomorrow.", "box": {"x": 1242, "y": 332, "width": 142, "height": 34}}, {"id": "14", "ch": "Occupational Health", "kind": "click", "title": "Date and time", "text": "Tomorrow at 10:30.", "box": {"x": 590, "y": 681, "width": 126, "height": 42}}, {"id": "15", "ch": "Occupational Health", "kind": "click", "title": "Book", "text": "Confirm the booking. It goes on the case timeline.", "box": {"x": 1242, "y": 734, "width": 142, "height": 34}}, {"id": "16", "ch": "Occupational Health", "kind": "click", "title": "After the appointment", "text": "Marcus records his advice.", "box": {"x": 1273, "y": 494, "width": 111, "height": 34}}, {"id": "17", "ch": "Occupational Health", "kind": "click", "title": "Fit with adjustments", "text": "A four-week phased return, and no night shifts for a month.", "box": {"x": 699, "y": 780, "width": 155, "height": 18}}, {"id": "18", "ch": "Occupational Health", "kind": "click", "title": "Straight back to the case", "text": "Send the advice to Sarah. It goes to the case, not into someone's inbox.", "box": {"x": 1185, "y": 549, "width": 199, "height": 34}}, {"id": "19", "ch": "Occupational Health", "kind": "info", "title": "A closed loop", "text": "The report is on the case, the timeline shows it, and Sarah gets a 'review adjustments' action. OH advice can't quietly stall any more.", "box": {"x": 323, "y": 298, "width": 480, "height": 17}}, {"id": "20", "ch": "The letter Sarah dreads", "kind": "click", "title": "Chloe hit Stage 1", "text": "Chloe has had 3 absences in a rolling 12 months. Her Stage 1 invitation has rules: 5 working days notice and the right to be accompanied.", "box": {"x": 868, "y": 562, "width": 114, "height": 34}}, {"id": "21", "ch": "The letter Sarah dreads", "kind": "info", "title": "Policy-correct, first time", "text": "Her absence figures and the earliest valid meeting date are already in. No hunting for an old template.", "box": {"x": 842, "y": 501, "width": 140, "height": 34}}, {"id": "22", "ch": "The letter Sarah dreads", "kind": "click", "title": "Approve and send", "text": "Sarah approves it.", "box": {"x": 842, "y": 501, "width": 140, "height": 34}}, {"id": "23", "ch": "The letter Sarah dreads", "kind": "info", "title": "Filed to the case", "text": "The letter is in Chloe's case documents, and the timeline records who approved it.", "box": {"x": 323, "y": 350, "width": 831, "height": 17}}, {"id": "24", "ch": "HR sees the exceptions", "kind": "info", "title": "Rebecca's caseload", "text": "Every open case in the Trust, worst first. Late manager actions, long-term cases with no OH and fit-note gaps are flagged. Nobody had to raise them.", "box": {"x": 282, "y": 463, "width": 156, "height": 20}}, {"id": "25", "ch": "HR sees the exceptions", "kind": "click", "title": "Tom's hearing is coming", "text": "Tom breached his Stage 2 target, so a Final Review Hearing is due. Open his case.", "box": {"x": 317, "y": 442, "width": 83, "height": 17}}, {"id": "26", "ch": "HR sees the exceptions", "kind": "click", "title": "A day of work, in seconds", "text": "Build the hearing pack from the record.", "box": {"x": 853, "y": 315, "width": 147, "height": 34}}, {"id": "27", "ch": "HR sees the exceptions", "kind": "info", "title": "It catches what would sink the hearing", "text": "Seven sections from the record, a summary and questions tailored to Tom, and a warning: the hearing needs an up-to-date OH report.", "box": {"x": 703, "y": 443, "width": 108, "height": 14}}, {"id": "28", "ch": "HR sees the exceptions", "kind": "click", "title": "The Chase Agent", "text": "Instead of chasing managers from a spreadsheet, an agent drafts one message per manager with overdue actions.", "box": {"x": 1255, "y": 367, "width": 130, "height": 34}}, {"id": "29", "ch": "HR sees the exceptions", "kind": "click", "title": "Review a chase", "text": "Open Sarah's.", "box": {"x": 1251, "y": 461, "width": 132, "height": 34}}, {"id": "30", "ch": "HR sees the exceptions", "kind": "info", "title": "Every action, its rule and a date", "text": "Appian AI wrote it from her overdue actions, with the HR06 rules and a reply-by date. Rebecca checks it before it goes.", "box": {"x": 1287, "y": 766, "width": 96, "height": 34}}, {"id": "31", "ch": "HR sees the exceptions", "kind": "click", "title": "Send", "text": "Send the chase.", "box": {"x": 1287, "y": 766, "width": 96, "height": 34}}, {"id": "32", "ch": "HR sees the exceptions", "kind": "info", "title": "On every case timeline", "text": "The timeline records that the AI drafted it and Rebecca approved it.", "box": {"x": 323, "y": 350, "width": 477, "height": 17}}, {"id": "33", "ch": "The policy runs itself", "kind": "click", "title": "The daily sweep", "text": "Every morning AAW runs the policy: long-term at 28 days, fit-note gaps, monthly reviews and reminders. (Here it is run on demand.)", "box": {"x": 887, "y": 468, "width": 176, "height": 38}}, {"id": "34", "ch": "The policy runs itself", "kind": "info", "title": "Never acts twice", "text": "Each finding becomes an action on the right case. Run it again and nothing happens.", "box": {"x": 323, "y": 116, "width": 670, "height": 17}}, {"id": "35", "ch": "Policy assistant", "kind": "click", "title": "Ask the policy", "text": "Managers ask HR the same questions every day. Ask HR06 instead, in plain English.", "box": {"x": 525, "y": 497, "width": 554, "height": 42}}, {"id": "36", "ch": "Policy assistant", "kind": "click", "title": "Ask", "text": "An Appian AI agent reads HR06 and its guides, and checks the Trust's live settings.", "box": {"x": 1089, "y": 499, "width": 76, "height": 38}}, {"id": "37", "ch": "Policy assistant", "kind": "info", "title": "An answer with its sources", "text": "A plain answer, with the policy pages it came from.", "box": {"x": 467, "y": 646, "width": 83, "height": 14}}, {"id": "38", "ch": "Policy assistant", "kind": "click", "title": "It shows its working", "text": "Open the page it cites.", "box": {"x": 553, "y": 644, "width": 80, "height": 17}}, {"id": "39", "ch": "Policy assistant", "kind": "info", "title": "The real policy, at the right page", "text": "Always the current version, so a policy update changes the answers with nothing to reconfigure.", "box": {"x": 145, "y": 109, "width": 1150, "height": 31}}, {"id": "40", "ch": "Policy assistant", "kind": "click", "title": "Close", "text": "Back to the conversation.", "box": {"x": 1226, "y": 822, "width": 69, "height": 38}}, {"id": "41", "ch": "Insights for leaders", "kind": "info", "title": "Live, not a month behind", "text": "One view across the Trust, from the same records managers and HR work in. No spreadsheet download.", "box": {"x": 282, "y": 84, "width": 773, "height": 133}}, {"id": "42", "ch": "Insights for leaders", "kind": "click", "title": "The Steering Group report", "text": "Draft the summary from the figures on this page.", "box": {"x": 1223, "y": 439, "width": 161, "height": 34}}, {"id": "43", "ch": "Insights for leaders", "kind": "info", "title": "Written from the figures only", "text": "Labelled with the model that wrote it. The day-one OH gap that hurt Daniel is the first point for the Group.", "box": {"x": 327, "y": 883, "width": 885, "height": 14}}, {"id": "44", "ch": "Insights for leaders", "kind": "click", "title": "Is the policy followed?", "text": "Open policy compliance.", "box": {"x": 477, "y": 361, "width": 153, "height": 34}}, {"id": "45", "ch": "Insights for leaders", "kind": "info", "title": "Every rule, measured", "text": "Return to works, day-one referrals, contacts and reviews done on time, by team.", "box": {"x": 306, "y": 425, "width": 296, "height": 20}}, {"id": "46", "ch": "Insights for leaders", "kind": "click", "title": "The audit trail", "text": "Open the audit trail.", "box": {"x": 736, "y": 361, "width": 107, "height": 34}}, {"id": "47", "ch": "Insights for leaders", "kind": "info", "title": "Who did what, and when", "text": "Every timeline entry in the period, including what the AI drafted and who approved it.", "box": {"x": 387, "y": 428, "width": 314, "height": 17}}, {"id": "48", "ch": "Daniel's own view", "kind": "info", "title": "My Attendance", "text": "Staff get their own view on any device: their absence, what happens next, their fit notes and the letters sent to them.", "box": {"x": 282, "y": 110, "width": 137, "height": 38}}, {"id": "49", "ch": "Daniel's own view", "kind": "click", "title": "A fit note from his phone", "text": "Daniel photographs his GP fit note.", "box": {"x": 314, "y": 430, "width": 189, "height": 49}}, {"id": "50", "ch": "Daniel's own view", "kind": "click", "title": "Appian AI reads it", "text": "It reads the dates and advice, and deliberately not the diagnosis, which HR does not need.", "box": {"x": 314, "y": 806, "width": 232, "height": 34}}, {"id": "51", "ch": "Daniel's own view", "kind": "click", "title": "Send it", "text": "Daniel checks the dates and sends it.", "box": {"x": 850, "y": 431, "width": 138, "height": 38}}, {"id": "52", "ch": "Daniel's own view", "kind": "info", "title": "On his case, straight away", "text": "The fit note is on Daniel's case and timeline for Sarah and HR. No paper, no email.", "box": {"x": 341, "y": 343, "width": 168, "height": 19}}, {"id": "53", "ch": "Daniel's own view", "kind": "click", "title": "Chloe's view", "text": "Switch to Chloe (in this demo you can view as either).", "box": {"x": 1285, "y": 15, "width": 123, "height": 34}}, {"id": "54", "ch": "Daniel's own view", "kind": "info", "title": "Her letter is here", "text": "The Stage 1 invitation Sarah approved is already in Chloe's letters.", "box": {"x": 1063, "y": 691, "width": 145, "height": 22}}, {"id": "55", "ch": "Daniel comes back", "kind": "click", "title": "Back at work", "text": "Daniel returns on the phased return OH advised.", "box": {"x": 1070, "y": 823, "width": 124, "height": 34}}, {"id": "56", "ch": "Daniel comes back", "kind": "click", "title": "Record his return", "text": "Record it. The trigger check runs and his return-to-work interview is added.", "box": {"x": 1272, "y": 433, "width": 112, "height": 34}}, {"id": "57", "ch": "Daniel comes back", "kind": "info", "title": "The absence closes properly", "text": "The end of the sickness period is recorded on the day, which was the gap in the paper process.", "box": {"x": 323, "y": 350, "width": 609, "height": 17}}, {"id": "58", "ch": "Daniel comes back", "kind": "click", "title": "Daniel's case", "text": "Open his case.", "box": {"x": 318, "y": 512, "width": 103, "height": 17}}, {"id": "59", "ch": "Daniel comes back", "kind": "click", "title": "The return to work record", "text": "One click builds the full record of the absence as a PDF.", "box": {"x": 1068, "y": 433, "width": 221, "height": 34}}, {"id": "60", "ch": "Daniel comes back", "kind": "info", "title": "Stored centrally, ready for any hearing", "text": "Every contact, referral, fit note, letter and decision, with dates, rules and who approved what. Filed on the case for HR to find.", "box": {"x": 323, "y": 298, "width": 453, "height": 17}}];
+const VW = 1440, VH = 900;
+const $ = id => document.getElementById(id);
+const stage = $('stage'), shot = $('shot'), spot = $('spot'), hot = $('hotspot'), tip = $('tip'), dock = $('tipdock');
+let i = 0, started = false;
+
+const chapters = [];
+STEPS.forEach((s, k) => { if (!chapters.length || chapters[chapters.length - 1].name !== s.ch) chapters.push({ name: s.ch, first: k }); });
+$('covermeta').textContent = `${chapters.length} chapters · ${STEPS.length} steps · about 6 minutes`;
+chapters.forEach(c => {
+  const b = document.createElement('button'); b.textContent = c.name; b.type = 'button';
+  b.onclick = () => { started = true; $('cover').hidden = true; stage.classList.remove('covered'); show(c.first); };
+  $('chapters').appendChild(b);
+});
+
+function narrow() { return window.matchMedia('(max-width: 760px)').matches; }
+
+function show(k) {
+  i = Math.max(0, Math.min(STEPS.length - 1, k));
+  const s = STEPS[i];
+  shot.src = 'shots/' + s.id + '.jpg';
+  shot.alt = s.title;
+  if (STEPS[i + 1]) { const pre = new Image(); pre.src = 'shots/' + STEPS[i + 1].id + '.jpg'; }
+  [...$('chapters').children].forEach((b, n) => b.setAttribute('aria-current', chapters[n].name === s.ch ? 'true' : 'false'));
+  const cur = [...$('chapters').children].find(b => b.getAttribute('aria-current') === 'true');
+  if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+  const b = s.box;
+  if (b) {
+    const pad = 6;
+    Object.assign(spot.style, { left: ((b.x - pad) / VW * 100) + '%', top: ((b.y - pad) / VH * 100) + '%',
+      width: ((b.width + pad * 2) / VW * 100) + '%', height: ((b.height + pad * 2) / VH * 100) + '%' });
+    spot.className = 'spot ' + s.kind; spot.hidden = false;
+  } else spot.hidden = true;
+  if (b && s.kind === 'click') {
+    hot.style.left = ((b.x + b.width / 2) / VW * 100) + '%';
+    hot.style.top = ((b.y + b.height / 2) / VH * 100) + '%';
+    hot.hidden = false; hot.setAttribute('aria-label', s.title + ': continue');
+  } else hot.hidden = true;
+
+  const last = i === STEPS.length - 1;
+  tip.innerHTML = '';
+  const ch = document.createElement('span'); ch.className = 'chap'; ch.textContent = s.ch;
+  const h = document.createElement('h2'); h.textContent = s.title;
+  const p = document.createElement('p'); p.textContent = s.text;
+  const row = document.createElement('div'); row.className = 'row';
+  const count = document.createElement('span'); count.className = 'count'; count.textContent = `${i + 1} of ${STEPS.length}`;
+  row.appendChild(count);
+  if (s.kind === 'click' && b && !last) {
+    const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = 'Click the dot to continue'; row.appendChild(hint);
+  } else {
+    const nb = document.createElement('button'); nb.className = 'btn'; nb.type = 'button';
+    nb.textContent = last ? 'Start again' : 'Next'; nb.onclick = () => last ? show(0) : show(i + 1); row.appendChild(nb);
+  }
+  tip.append(ch, h, p, row);
+  if (narrow()) { dock.appendChild(tip); } else { stage.appendChild(tip); placeTip(b); }
+
+  $('prev').disabled = i === 0;
+  $('next').textContent = last ? 'Start again' : 'Next';
+  $('pos').textContent = `${i + 1} / ${STEPS.length}`;
+  $('prog').style.width = ((i + 1) / STEPS.length * 100) + '%';
+  try { history.replaceState(null, '', '#s' + (i + 1)); } catch (e) {}
+}
+
+function placeTip(b) {
+  const W = stage.clientWidth, H = stage.clientHeight, sx = W / VW, sy = H / VH;
+  const tw = tip.offsetWidth, th = tip.offsetHeight, gap = 18;
+  let x, y;
+  if (!b) { x = (W - tw) / 2; y = (H - th) / 2; }
+  else {
+    const L = b.x * sx, T = b.y * sy, R = (b.x + b.width) * sx, B = (b.y + b.height) * sy;
+    if (R + gap + tw < W) { x = R + gap; y = (T + B) / 2 - th / 2; }
+    else if (L - gap - tw > 0) { x = L - gap - tw; y = (T + B) / 2 - th / 2; }
+    else if (B + gap + th < H) { x = (L + R) / 2 - tw / 2; y = B + gap; }
+    else { x = (L + R) / 2 - tw / 2; y = T - gap - th; }
+  }
+  x = Math.max(10, Math.min(W - tw - 10, x)); y = Math.max(10, Math.min(H - th - 10, y));
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+
+function next() { if (!started) return begin(); i === STEPS.length - 1 ? show(0) : show(i + 1); }
+function begin() { started = true; $('cover').hidden = true; stage.classList.remove('covered'); show(i); hot.hidden || hot.focus({ preventScroll: true }); }
+hot.onclick = next;
+$('next').onclick = next;
+$('prev').onclick = () => show(i - 1);
+$('start').onclick = begin;
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || (e.key === 'Enter' && e.target === document.body)) { e.preventDefault(); next(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); if (started) show(i - 1); }
+});
+window.addEventListener('resize', () => { if (narrow()) dock.appendChild(tip); else { stage.appendChild(tip); placeTip(STEPS[i].box); } });
+shot.addEventListener('load', () => { if (!narrow()) placeTip(STEPS[i].box); });
+
+const m = /^#s(\d+)$/.exec(location.hash);
+if (m) { started = true; $('cover').hidden = true; show(parseInt(m[1], 10) - 1); } else { stage.classList.add('covered'); show(0); }
+</script>
+</body>
+</html>
